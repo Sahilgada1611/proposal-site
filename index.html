@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Can I Ask You Something?</title>
+<style>
+  :root{
+    --bg:#0f1724; --card:#0b1220; --accent:#ff6b81; --muted:#98a0b3;
+    --glass: rgba(255,255,255,0.04);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center;
+    font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    background: linear-gradient(180deg,#061022 0%, #07182a 60%), radial-gradient(600px 400px at 10% 10%, rgba(255,107,129,0.06), transparent 10%);
+    color:#e6eef8;
+    padding:24px;
+  }
+  .card{
+    width:100%; max-width:760px; background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    border-radius:16px; padding:28px; box-shadow: 0 8px 30px rgba(2,6,23,0.6);
+    border:1px solid rgba(255,255,255,0.04);
+    backdrop-filter: blur(6px);
+  }
+  header{display:flex; gap:16px; align-items:center;}
+  .avatar{
+    width:68px; height:68px; border-radius:12px; background:linear-gradient(135deg,var(--accent),#ff9aa2);
+    display:flex; align-items:center; justify-content:center; font-weight:700; font-size:28px;
+  }
+  h1{margin:0; font-size:22px}
+  p.lead{color:var(--muted); margin-top:10px; line-height:1.5}
+  .memory{margin-top:18px; padding:12px; border-radius:10px; background:var(--glass); color:#dce9ff}
+  .cta{display:flex; gap:12px; margin-top:18px; flex-wrap:wrap}
+  button{
+    padding:12px 18px; border-radius:10px; border:0; cursor:pointer; font-weight:600;
+    box-shadow: 0 6px 16px rgba(2,6,23,0.45);
+  }
+  .btn-yes{background:linear-gradient(90deg,var(--accent), #ff8fa0); color:#071022;}
+  .btn-talk{background:transparent; color:#e6eef8; border:1px solid rgba(255,255,255,0.06);}
+  .btn-no{background:#1f2937; color:var(--muted)}
+  footer{margin-top:18px; color:var(--muted); font-size:13px}
+  .popup{
+    position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:30;
+    background:linear-gradient(180deg, rgba(2,6,23,0.6), rgba(2,6,23,0.85));
+    padding:24px;
+  }
+  .modal{
+    width:100%; max-width:540px; background:#071428; padding:22px; border-radius:14px; text-align:center;
+    border:1px solid rgba(255,255,255,0.03);
+  }
+  .emoji{font-size:48px; margin-bottom:8px}
+  .response-text{font-size:18px; margin:10px 0 16px}
+  .small{font-size:14px; color:var(--muted); margin-top:6px}
+  /* simple confetti */
+  .confetti-piece{
+    position:fixed; width:10px; height:16px; z-index:40; opacity:0.95; pointer-events:none;
+    transform-origin:center;
+  }
+  @media (max-width:520px){
+    .avatar{width:56px;height:56px}
+    h1{font-size:18px}
+  }
+</style>
+</head>
+<body>
+  <div class="card" role="main" aria-labelledby="main-title">
+    <header>
+      <div class="avatar" aria-hidden="true">💌</div>
+      <div>
+        <h1 id="main-title">Can I tell you something important?</h1>
+        <p class="lead">I made this little page because I wanted to be honest and sweet — and a little bit creative. Click below when you're ready.</p>
+      </div>
+    </header>
+
+    <div class="memory" id="memory">
+      <strong>Little memory:</strong> Remember when we both laughed at that silly song on the bus? I keep smiling thinking about it.
+    </div>
+
+    <div class="cta" role="group" aria-label="response choices">
+      <button class="btn-yes" id="yesBtn">Yes — Tell me ❤️</button>
+      <button class="btn-talk" id="talkBtn">Let's talk first</button>
+      <button class="btn-no" id="noBtn">I need space</button>
+    </div>
+
+    <footer>
+      <div class="small">This is private — just for you. If you'd prefer not to answer here, that's totally okay.</div>
+    </footer>
+  </div>
+
+  <!-- Modal / popup -->
+  <div class="popup" id="popup" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal" id="modalContent">
+      <div class="emoji" id="emoji">🌸</div>
+      <div class="response-text" id="responseText">I like you — a lot. Would you like to go on a date with me?</div>
+      <div style="display:flex; gap:10px; justify-content:center; margin-top:12px">
+        <button class="btn-yes" id="modalYes">Yes, I'd love to</button>
+        <button class="btn-talk" id="modalChat">Maybe — let's talk</button>
+        <button class="btn-no" id="modalNo">I don't feel the same</button>
+      </div>
+      <div class="small" id="postNote">If you say yes, I'll be the happiest. If not, I promise no awkwardness — your comfort matters.</div>
+    </div>
+  </div>
+
+<script>
+  // helpers
+  const popup = document.getElementById('popup');
+  const modalText = document.getElementById('responseText');
+  const emoji = document.getElementById('emoji');
+
+  // open modal (Yes)
+  document.getElementById('yesBtn').addEventListener('click', ()=>{
+    openModal("I like you — I really do. Would you go on a date with me?");
+  });
+  document.getElementById('talkBtn').addEventListener('click', ()=>{
+    openModal("I want to share this in person or over a call — when are you free?");
+    document.getElementById('modalChat').focus();
+  });
+  document.getElementById('noBtn').addEventListener('click', ()=>{
+    openModal("No worries — thank you for being honest. I respect your space.", true);
+  });
+
+  document.getElementById('modalYes').addEventListener('click', ()=> {
+    modalText.textContent = "YAY! I'm so happy 😊. Can I pick you up this weekend or would you prefer coffee somewhere?";
+    emoji.textContent = "🎉";
+    popupTimeoutClose();
+    runConfetti();
+  });
+
+  document.getElementById('modalChat').addEventListener('click', ()=>{
+    modalText.textContent = "Cool — let's pick a time to chat. What day works for you?";
+    emoji.textContent = "💬";
+    popupTimeoutClose();
+  });
+
+  document.getElementById('modalNo').addEventListener('click', ()=>{
+    modalText.textContent = "Thanks for being kind and honest. I appreciate you. No pressure at all.";
+    emoji.textContent = "🤝";
+    popupTimeoutClose();
+  });
+
+  function openModal(text, soft=false){
+    modalText.textContent = text;
+    popup.style.display = "flex";
+    popup.setAttribute('aria-hidden','false');
+    // small animation focus
+    document.getElementById('modalContent').animate([{transform:'scale(.96)', opacity:0},{transform:'scale(1)', opacity:1}], {duration:280, easing:'cubic-bezier(.2,.9,.3,1)'});
+    if(soft) document.getElementById('modalNo').focus(); else document.getElementById('modalYes').focus();
+  }
+  function popupTimeoutClose(){
+    // leave open so they can interact; close automatically after 30s to avoid lingering (gentle)
+    setTimeout(()=>{ popup.style.display='none'; popup.setAttribute('aria-hidden','true'); }, 30000);
+  }
+
+  // simple confetti generator (no external libs)
+  function runConfetti(){
+    const colors = ["#ff6b81","#ffd166","#8bd3c7","#a78bfa","#ff9aa2"];
+    const count = 28;
+    for(let i=0;i<count;i++){
+      const el = document.createElement('div');
+      el.className = 'confetti-piece';
+      el.style.left = Math.random()*100 + "vw";
+      el.style.top = "-10vh";
+      el.style.background = colors[Math.floor(Math.random()*colors.length)];
+      el.style.transform = "rotate("+(Math.random()*360)+"deg)";
+      el.style.opacity = 0.95;
+      el.style.width = (6 + Math.random()*12) + "px";
+      el.style.height = (10 + Math.random()*14) + "px";
+      document.body.appendChild(el);
+      // fall animation
+      const fall = el.animate([
+        { transform: `translateY(0) rotate(${Math.random()*360}deg)` , opacity:1 },
+        { transform: `translateY(110vh) translateX(${(Math.random()-0.5)*60}vw) rotate(${Math.random()*720}deg)`, opacity:0.95 }
+      ], { duration: 2400 + Math.random()*1200, easing: 'cubic-bezier(.2,.8,.2,1)' });
+      fall.onfinish = ()=> el.remove();
+    }
+  }
+
+  // Accessibility: allow ESC to close popup
+  document.addEventListener('keydown', (e)=>{
+    if(e.key === 'Escape'){
+      popup.style.display='none'; popup.setAttribute('aria-hidden','true');
+    }
+  });
+
+  // Tiny personalization: let user set name via prompt for demo (optional)
+  (function personalize(){
+    try {
+      const name = new URLSearchParams(location.search).get('name');
+      if(name){
+        document.querySelector('h1').textContent = `Hey ${decodeURIComponent(name)} — can I ask something?`;
+        document.getElementById('memory').innerHTML = `<strong>Little memory:</strong> Remember when we both laughed at that silly song on the bus? I keep smiling thinking about it.`;
+      }
+    } catch(e){}
+  })();
+</script>
+</body>
+</html>
